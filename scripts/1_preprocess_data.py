@@ -1,10 +1,34 @@
-# scripts/1_preprocess_data.py
-import pandas as pd
 import os
+import pandas as pd
 
-# Load datasets
-crosscheck_data = pd.read_csv('../data/crosscheck_daily_data_cleaned_w_sameday.csv')
-studentlife_data = pd.read_csv('../data/studentlife_daily_data_cleaned_w_sameday_08282021.csv')
+# Function to ensure unique column names
+def make_unique_columns(columns):
+    """Ensure unique column names by appending a suffix if duplicates exist."""
+    seen = {}
+    unique_columns = []
+    
+    for col in columns:
+        if col in seen:
+            seen[col] += 1
+            unique_columns.append(f"{col}_{seen[col]}")
+        else:
+            seen[col] = 0
+            unique_columns.append(col)
+    
+    return unique_columns
+
+# Define paths
+base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
+crosscheck_path = os.path.join(base_path, "crosscheck_daily_data_cleaned_w_sameday.csv")
+studentlife_path = os.path.join(base_path, "studentlife_daily_data_cleaned_w_sameday_08282021.csv")
+
+# Read datasets
+crosscheck_data = pd.read_csv(crosscheck_path)
+studentlife_data = pd.read_csv(studentlife_path)
+
+# Reset index to avoid index conflicts
+crosscheck_data = crosscheck_data.reset_index(drop=True)
+studentlife_data = studentlife_data.reset_index(drop=True)
 
 # Rename columns for consistency
 studentlife_data.rename(columns={
@@ -18,8 +42,16 @@ studentlife_data.rename(columns={
     'ema_Behavior_anxious': 'ema_THINK',
 }, inplace=True)
 
+# Ensure unique column names
+crosscheck_data.columns = [f"crosscheck_{col}" if col in studentlife_data.columns else col for col in crosscheck_data.columns]
+studentlife_data.columns = make_unique_columns(studentlife_data.columns)  # Apply function to StudentLife dataset
+
+# Debugging: Print column names to confirm uniqueness
+print("Crosscheck Columns:", crosscheck_data.columns.tolist())
+print("StudentLife Columns:", studentlife_data.columns.tolist())
+
 # Combine datasets
-combined_data = pd.concat([crosscheck_data, studentlife_data], ignore_index=True)
+combined_data = pd.concat([crosscheck_data, studentlife_data], axis=0, ignore_index=True)
 
 # Handle missing values
 combined_data.fillna(0, inplace=True)
@@ -29,5 +61,6 @@ combined_data['total_activity_duration'] = combined_data.filter(like='act_').sum
 combined_data['total_convo_duration'] = combined_data.filter(like='audio_convo_duration_').sum(axis=1)
 
 # Save preprocessed data
-combined_data.to_csv('../data/combined_data.csv', index=False)
-print("Data preprocessing complete. Combined data saved to 'data/combined_data.csv'.")
+output_path = os.path.join(base_path, "combined_data.csv")
+combined_data.to_csv(output_path, index=False)
+print(f"Data preprocessing complete. Combined data saved to '{output_path}'.")

@@ -1,21 +1,23 @@
 # scripts/3_evaluate_model.py
 import pandas as pd
 from sklearn.model_selection import LeaveOneGroupOut
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import joblib
+import os
 
 # Load preprocessed data
-data = pd.read_csv('../data/combined_data.csv')
+base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
+combined_data = pd.read_csv(os.path.join(base_path, "combined_data.csv"))
 
 # Initialize LOSO-CV
 logo = LeaveOneGroupOut()
-groups = data['study_id']
+groups = combined_data['study_id']
 
 # Evaluate models
-for cluster in data['cluster'].unique():
-    cluster_data = data[data['cluster'] == cluster]
-    model = joblib.load(f'../models/model_cluster_{cluster}.pkl')
+for cluster in combined_data['cluster'].unique():
+    cluster_data = combined_data[combined_data['cluster'] == cluster]
+    model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "models", f"model_cluster_{cluster}.pkl"))
+    model = joblib.load(model_path)
     
     for train_index, test_index in logo.split(cluster_data, groups=cluster_data['study_id']):
         X_train, X_test = cluster_data.iloc[train_index], cluster_data.iloc[test_index]
