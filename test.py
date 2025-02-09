@@ -1,5 +1,7 @@
+import numpy as np
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
 
-crosscheck_data = pd.read_csv('D:/mental_health_prediction/data/crosscheck_daily_data_cleaned_w_sameday.csv')
-studentlife_data = pd.read_csv('D:/mental_health_prediction/data/studentlife_daily_data_cleaned_w_sameday_08282021.csv')
-combined_data = pd.read_csv('D:/mental_health_prediction/data/combined_data.csv')
+print(f"numpy: {np.__version__}")       # Should be ≥1.26.0
+print(f"pandas: {pd.__version__}")      # Should be ≥2.1.0
+print(f"sklearn: {sklearn.__version__}")# Should be ≥1.4.0
