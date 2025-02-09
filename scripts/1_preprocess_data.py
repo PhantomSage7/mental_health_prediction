@@ -1,5 +1,7 @@
+# scripts/1_preprocess_data.py
 import os
 import pandas as pd
+from sklearn.cluster import KMeans
 
 # Function to ensure unique column names
 def make_unique_columns(columns):
@@ -46,10 +48,6 @@ studentlife_data.rename(columns={
 crosscheck_data.columns = [f"crosscheck_{col}" if col in studentlife_data.columns else col for col in crosscheck_data.columns]
 studentlife_data.columns = make_unique_columns(studentlife_data.columns)  # Apply function to StudentLife dataset
 
-# Debugging: Print column names to confirm uniqueness
-print("Crosscheck Columns:", crosscheck_data.columns.tolist())
-print("StudentLife Columns:", studentlife_data.columns.tolist())
-
 # Combine datasets
 combined_data = pd.concat([crosscheck_data, studentlife_data], axis=0, ignore_index=True)
 
@@ -59,6 +57,11 @@ combined_data.fillna(0, inplace=True)
 # Feature engineering
 combined_data['total_activity_duration'] = combined_data.filter(like='act_').sum(axis=1)
 combined_data['total_convo_duration'] = combined_data.filter(like='audio_convo_duration_').sum(axis=1)
+
+# Clustering for personalization
+features_for_clustering = combined_data.filter(like='ema_').columns.tolist() + ['total_activity_duration', 'total_convo_duration']
+kmeans = KMeans(n_clusters=5, random_state=42)
+combined_data['cluster'] = kmeans.fit_predict(combined_data[features_for_clustering])
 
 # Save preprocessed data
 output_path = os.path.join(base_path, "combined_data.csv")
